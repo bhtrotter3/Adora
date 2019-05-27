@@ -1,56 +1,48 @@
+package com.example.adora;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.os.Bundle;
+import android.os.Looper;
+import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
-        package com.example.adora;
-
-        import android.Manifest;
-        import android.content.pm.PackageManager;
-        import android.location.Location;
-        import android.os.Bundle;
-        import android.os.Looper;
-        import android.support.annotation.NonNull;
-        import android.support.v4.content.ContextCompat;
-        import android.support.v7.app.AppCompatActivity;
-        import android.util.Log;
-
-        import com.google.android.gms.common.ConnectionResult;
-        import com.google.android.gms.common.api.GoogleApiClient;
-        import com.google.android.gms.location.FusedLocationProviderClient;
-        import com.google.android.gms.location.LocationCallback;
-        import com.google.android.gms.location.LocationRequest;
-        import com.google.android.gms.location.LocationResult;
-
-        import com.google.android.gms.location.LocationServices;
-        import com.google.android.gms.maps.CameraUpdateFactory;
-        import com.google.android.gms.maps.GoogleMap;
-        //import com.google.android.gms.maps.MapFragment;
-        //import com.google.android.gms.maps.OnMapReadyCallback;
-        import com.google.android.gms.maps.model.LatLng;
-        import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapsActivity extends AppCompatActivity implements
         GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener//,
-        //OnMapReadyCallback
-         {
+        GoogleApiClient.OnConnectionFailedListener {
+    //GoogleMap mMap;
 
-    public static final String TAG = MapsActivity.class.getSimpleName();
+    FusedLocationProviderClient mFusedLocationClient;
+    GoogleApiClient mGoogleApiClient;
+    LocationRequest mLocationRequest;
+    // ...
+        LocationCallback mLocationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                for (Location location : locationResult.getLocations()) {
+                    Log.i("MainActivity", "Location: " + location.getLatitude() + " " + location.getLongitude());
 
-    private GoogleMap mMap; // Might be null if Google Play services APK is not available.
-
-    private FusedLocationProviderClient mFusedLocationClient;
-    private LocationRequest mLocationRequest;
-    private GoogleApiClient mGoogleApiClient;
-    private Location mlocation;
-
-    private LocationCallback mLocationCallback = new LocationCallback() {
-        @Override
-        public void onLocationResult(LocationResult locationResult) {
-            for (Location location : locationResult.getLocations()) {
-                mlocation = location;
-
+                }
             }
-        }
-    };
+
+        };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +50,9 @@ public class MapsActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_maps);
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        requestLocationUpdates();
+
+        //...............
     }
 
     @Override
@@ -67,7 +62,6 @@ public class MapsActivity extends AppCompatActivity implements
             requestLocationUpdates();
         } else {
             buildGoogleApiClient();
-            //setUpMapIfNeeded();
         }
     }
 
@@ -83,7 +77,11 @@ public class MapsActivity extends AppCompatActivity implements
     @Override
     public void onConnected(Bundle bundle) {
         requestLocationUpdates();
-        handleNewLocation(mlocation);
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        //
     }
 
     public void requestLocationUpdates() {
@@ -99,11 +97,6 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onConnectionSuspended(int i) {
-        //??
-    }
-
-    @Override
     public void onPause() {
         super.onPause();
         if (mFusedLocationClient != null) {
@@ -113,49 +106,6 @@ public class MapsActivity extends AppCompatActivity implements
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        //??
+        //
     }
-/*
-    private void setUpMapIfNeeded() {
-        // Do a null check to confirm that we have not already instantiated the map.
-        if (mMap == null) {
-            // Try to obtain the map from the SupportMapFragment.
-            MapFragment mapFrag = (MapFragment) getFragmentManager()
-                    .findFragmentById(R.id.map);
-            mapFrag.getMapAsync(this);
-            // Check if we were successful in obtaining the map.
-            if (mMap != null) {
-                setUpMap();
-            }
-        }
-    }
-    */
-/*
-    private void setUpMap() {
-        mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("You are here."));
-    }
-*/
-    public void handleNewLocation(Location location) {
-        Log.d(TAG, location.toString());
-
-        double currentLatitude = location.getLatitude();
-        double currentLongitude = location.getLongitude();
-        LatLng latLng = new LatLng(currentLatitude, currentLongitude);
-
-        //mMap.addMarker(new MarkerOptions().position(new LatLng(currentLatitude, currentLongitude)).title("Current Location"));
-        MarkerOptions options = new MarkerOptions()
-                .position(latLng)
-                .title("I am here!");
-        mMap.addMarker(options);
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-    }
-
 }
-/*
-    @Override
-    public void onMapReady(GoogleMap map) {
-        map.addMarker(new MarkerOptions()
-                .position(new LatLng(0, 0))
-                .title("Marker"));
-    }
-} */
