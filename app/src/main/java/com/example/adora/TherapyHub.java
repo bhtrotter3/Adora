@@ -1,4 +1,4 @@
 package com.example.adora;
 
-public class Decay {
+public class TherapyHub {
 }

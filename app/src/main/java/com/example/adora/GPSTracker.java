@@ -17,19 +17,32 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 
-public class Tracker extends AppCompatActivity implements
+import java.util.concurrent.TimeUnit;
+
+public class GPSTracker extends AppCompatActivity implements
         GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener {
-    //Paint mPainter = new Paint();
+        GoogleApiClient.OnConnectionFailedListener,
+        OnMapReadyCallback {
+    GoogleMap mMap;
+    //MapPainter mPainter = new MapPainter();
 
     FusedLocationProviderClient mFusedLocationClient;
     GoogleApiClient mGoogleApiClient;
     LocationRequest mLocationRequest;
+    SafeZoneDecay mDecay = new SafeZoneDecay();
     // ...
     LocationCallback mLocationCallback;
-    LatLng safeZone;
+    LatLng mSafeZoneStart = new LatLng(0,0);
+    LatLng mSafeZoneCompare = new LatLng(0,0);
+    LatLng mSafeZone = new LatLng(0,0);
+    //boolean mapReady = false;
 
     static final int MY_PERMISSIONS_REQUEST_READ_FINE_LOCATION = 100;
 
@@ -41,8 +54,9 @@ public class Tracker extends AppCompatActivity implements
             @Override
             public void onLocationResult(LocationResult locationResult) {
                 for (Location location : locationResult.getLocations()) {
-                    Log.i("GPS Tracker", "Location: " + location.getLatitude() + " " + location.getLongitude());
-                    LatLng safeZone = new LatLng(location.getLatitude(), location.getLongitude());
+                    Log.i("GPSTracker", "Location: " + location.getLatitude() + " " + location.getLongitude());
+                    mSafeZoneCompare = new LatLng(location.getLatitude(), location.getLongitude());
+                   // mPainter.updateMarker(mSafeZone);
 
                 }
 
@@ -51,6 +65,10 @@ public class Tracker extends AppCompatActivity implements
         };
 
         setContentView(R.layout.activity_maps);
+
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         requestLocationUpdates();
@@ -80,7 +98,7 @@ public class Tracker extends AppCompatActivity implements
 
     @Override
     public void onConnected(Bundle bundle) {
-        requestLocationUpdates();
+            requestLocationUpdates();
     }
 
     @Override
@@ -90,7 +108,7 @@ public class Tracker extends AppCompatActivity implements
 
     public void requestLocationUpdates() {
         mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(120000); // two minute interval
+        mLocationRequest.setInterval(120000); // two minute interval FIX!! 120000
         mLocationRequest.setFastestInterval(120000);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
@@ -131,7 +149,14 @@ public class Tracker extends AppCompatActivity implements
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         //
     }
-    public LatLng getSafeZone (){
-        return safeZone;
+
+    @Override
+    public void onMapReady(GoogleMap mMap) {
+        if (mSafeZone != mSafeZoneCompare && mSafeZoneCompare != mSafeZoneStart){
+            mMap.addMarker(new MarkerOptions().position(mSafeZoneCompare)
+                    .title("Safe Zone"));
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(mSafeZoneCompare));
+            mSafeZone = mSafeZoneCompare;
+        }
     }
 }
